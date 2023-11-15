@@ -2,8 +2,6 @@ import base64
 import json
 import os
 import re
-import string
-import urllib.request
 from string import digits
 
 import requests
@@ -13,7 +11,7 @@ from tqdm import tqdm
 from ModelRecipe import ModelRecipe
 
 debug = False
-folderRecipes = "Recipes"
+folderRecipes = "recipes"
 
 
 def saveRecipe(linkRecipeToDownload):
@@ -28,7 +26,6 @@ def saveRecipe(linkRecipeToDownload):
     difficulty = findDifficulty(soup)
     tags = findTags(soup)
     ingredients = findIngredients(soup)
-    #description = findDescription(soup)
     category = findCategory(soup)
     imageBase64 = findImage(soup)
 
@@ -40,7 +37,6 @@ def saveRecipe(linkRecipeToDownload):
     modelRecipe.rating = rating
     modelRecipe.tags = tags
     modelRecipe.ingredients = ingredients
-    #modelRecipe.description = description
     modelRecipe.imageBase64 = imageBase64
 
     createFileJson(modelRecipe.toDictionary(), filePath)
@@ -94,17 +90,6 @@ def isIngredientOptional(quantityProduct):
         if word in quantityProduct:
             return True
     return False
-
-
-
-def findDescription(soup):
-    allDescription = ""
-    for tag in soup.find_all(attrs={"class": "gz-content-recipe-step"}):
-        removeNumbers = str.maketrans("", "", digits)
-        if hasattr(tag.p, "text"):
-            description = tag.p.text.translate(removeNumbers)
-            allDescription = allDescription + description
-    return allDescription
 
 
 def findCategory(soup):
