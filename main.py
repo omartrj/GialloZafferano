@@ -24,16 +24,23 @@ def saveRecipe(linkRecipeToDownload):
     if os.path.exists(filePath):
         return
 
+    rating = findRating(soup)
+    difficulty = findDifficulty(soup)
+    tags = findTags(soup)
     ingredients = findIngredients(soup)
-    description = findDescription(soup)
+    #description = findDescription(soup)
     category = findCategory(soup)
     imageBase64 = findImage(soup)
 
     modelRecipe = ModelRecipe()
     modelRecipe.title = title
-    modelRecipe.ingredients = ingredients
-    modelRecipe.description = description
+    modelRecipe.link = linkRecipeToDownload
     modelRecipe.category = category
+    modelRecipe.difficulty = difficulty
+    modelRecipe.rating = rating
+    modelRecipe.tags = tags
+    modelRecipe.ingredients = ingredients
+    #modelRecipe.description = description
     modelRecipe.imageBase64 = imageBase64
 
     createFileJson(modelRecipe.toDictionary(), filePath)
@@ -45,16 +52,49 @@ def findTitle(soup):
         titleRecipe = title.text
     return titleRecipe
 
+def findRating(soup):
+    ratingRecipe = ""
+    for rating in soup.find_all(attrs={"class": "gz-rating-panel rating_panel"}):
+        ratingRecipe = rating.get("data-content-rate")
+    return ratingRecipe
+
+def findDifficulty(soup):
+    difficultyRecipe = ""
+    div = soup.find("div", attrs={"class": "gz-list-featured-data"})
+    ul = div.find("ul")
+    li = ul.find_all("li")[0]
+    span = li.find_all("span")[1]
+    difficultyRecipe = span.text.replace("Difficoltà: ", "")
+    return difficultyRecipe
+
+def findTags(soup):
+    allTags = []
+    for tag in soup.find_all(attrs={"class": "gz-name-featured-data-other"}):
+        allTags.append(tag.text)
+    return allTags
 
 def findIngredients(soup):
     allIngredients = []
     for tag in soup.find_all(attrs={"class": "gz-ingredient"}):
-        link = tag.a.get("href")
         nameIngredient = tag.a.string
         contents = tag.span.contents[0]
         quantityProduct = re.sub(r"\s+", " ", contents).strip()
-        allIngredients.append([nameIngredient, quantityProduct])
+        
+        ingredient_dict = {
+            "name": nameIngredient,
+            "isOptional": isIngredientOptional(quantityProduct),
+        }
+        allIngredients.append(ingredient_dict)
     return allIngredients
+
+def isIngredientOptional(quantityProduct):
+    # List of words to flag as optional
+    optionalWords = ["facoltativ", "q.b", "ramett", "fogliolin", "pizzic", "filo", "cucchiaino"]
+    for word in optionalWords:
+        if word in quantityProduct:
+            return True
+    return False
+
 
 
 def findDescription(soup):
@@ -69,8 +109,12 @@ def findDescription(soup):
 
 def findCategory(soup):
     for tag in soup.find_all(attrs={"class": "gz-breadcrumb"}):
-        category = tag.li.a.string
-        return category
+        if tag.li is not None:
+            if tag.li.a is not None:
+                category = tag.li.a.string
+                return category
+    return ""
+
 
 
 def findImage(soup):
@@ -109,7 +153,7 @@ def calculateFilePath(title):
 
 
 def createFileJson(data, path):
-    with open(path, "w") as file:
+    with open(path, "w", encoding='utf-8') as file:
         file.write(json.dumps(data, ensure_ascii=False))
 
 

@@ -1,16 +1,22 @@
 class ModelRecipe:
-    imageBase64 = ""
     title = ""
+    link = ""
     category = ""
-    description = ""
+    difficulty = ""
+    rating = ""
+    tags = []
     ingredients = []
+    imageBase64 = ""
 
     def toDictionary(self):
         recipe = {
-            "imageBase64": self.imageBase64,
             "title": self.title,
+            "link": self.link,
             "category": self.category,
-            "description": self.description,
+            "difficulty": self.difficulty,
+            "rating": self.rating,
+            "tags": self.tags,
             "ingredients": self.ingredients,
+            "imageBase64": self.imageBase64,
         }
         return recipe
